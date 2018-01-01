@@ -24,9 +24,15 @@
     <ClInclude Include="myfunc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="motors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="myfunc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="motors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

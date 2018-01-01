@@ -6,18 +6,15 @@
 
 #include <Servo.h>
 #include "myfunc.h"
+#include "motors.h"
 
 #define fdl2_battery    pinC3
-
-#define fdl2_enc_a      pinC1
-#define fdl2_enc_b      pinC0
-#define fdl2_enc_button pinC2
 
 #define fdl2_fire       pinD5
 
 
 /* everything encoder related */
-ClickEncoder *encoder;
+ClickEncoder encoder(pinC1, pinC0, pinC2, 4);
 waittimer encoder_timer;
 int16_t encoder_last, encoder_value;
 
@@ -26,14 +23,17 @@ int16_t encoder_last, encoder_value;
 waittimer battery_timer;
 uint32_t bat_value;
 
-pusherclass pusher;
+/* launcher to speed up the darts */
+LauncherClass launcher(pinB2, 1000, 2000);
 
-Servo myServo;													// create a servo object
+/* pusher to shift the dart into the launcher */
+PusherClass pusher(pinB5, pinB4, pinB3, pinB1, pinD7, pinD6, launcher.ready);
+
 
 
 void setup() {
 	Serial.begin(115200);
-	dbg << F("Servo tester\n");									// init serial interface and some debug
+	dbg << F("FDL-2 Arduino v0.1\n");							// init serial interface and some debug
 
 	ssd1306_128x64_i2c_init();									// init the oled display
 	ssd1306_fillScreen(0x00);									// and write some welcome text
@@ -43,23 +43,19 @@ void setup() {
 	
 	register_PCINT(fdl2_fire);									// init and register the fire button as interrupt
 
-	encoder = new ClickEncoder(fdl2_enc_a, fdl2_enc_b, fdl2_enc_button, 4); // init the encoder
-
 	analogReference(INTERNAL);									// battery reference to 1.1 Volt
 	analogRead(fdl2_battery);
 	battery_timer.set(1000);
 
-	pusher.ain2_pin = pinB4;									// introduce hardware pins to pusher class
-	pusher.ain1_pin = pinB5;
-	pusher.stby_pin = pinB1;
-	pusher.pwma_pin = pinB3;
-	pusher.back_sens = pinD6;
-	pusher.frnt_sens = pinD7;
-	pusher.init();												// init the pusher hardware, motor and switches
-																
-	myServo.attach(pinB2,1000,2000);							// attaches the servo on pin 10 to the servo object
-	myServo.write(0);											// and set it off
-	
+	launcher.init();											// init the launcher
+
+	// default settings
+	launcher.fire_speed = 60;									// fire speed in % of max_speed
+	launcher.speedup_time = 300;								// holds the time the motor needs to speedup
+	launcher.standby_speed = 57;								// standby speed in % of max_speed
+	launcher.standby_time = 500;								// standby time in ms
+	pusher.mode = 2;											// how many darts per fire push
+
 	//pci_ptr = &test_int;
 
 }
@@ -77,11 +73,11 @@ void loop() {
 	}
 
 	if (encoder_timer.done()) {									// poll the encoder service function every 1 ms
-		encoder->service();
+		encoder.service();
 		encoder_timer.set(1);
 	}
 
-	encoder_value += encoder->getValue();						// check if the encoder value had changed
+	encoder_value += encoder.getValue();						// check if the encoder value had changed
 	if (encoder_value > 255) encoder_value = 255;				// and take care of the changes
 	if (encoder_value < 0) encoder_value = 0;
 
@@ -91,14 +87,14 @@ void loop() {
 	}
 
 
-	ClickEncoder::Button b = encoder->getButton();				// check the encoder button
+	ClickEncoder::Button b = encoder.getButton();				// check the encoder button
 	if (b != ClickEncoder::Open) {
 		switch (b) {
-			case ClickEncoder::Pressed:        dbg << "pressed"; break;
-			case ClickEncoder::Held:           dbg << "held"; break;
-			case ClickEncoder::Released:       dbg << "released"; break;
-			case ClickEncoder::Clicked:        dbg << "clicked"; break;
-			case ClickEncoder::DoubleClicked:  dbg << "double clicked"; break;
+			case ClickEncoder::Pressed:        dbg << F("pressed"); break;
+			case ClickEncoder::Held:           dbg << F("held"); break;
+			case ClickEncoder::Released:       dbg << F("released"); break;
+			case ClickEncoder::Clicked:        dbg << F("clicked"); break;
+			case ClickEncoder::DoubleClicked:  dbg << F("double clicked"); break;
 		}
 		dbg << '\n';
 	}
@@ -106,35 +102,17 @@ void loop() {
 	/* check fire button continously and drive pusher */
 	uint8_t x = check_PCINT(fdl2_fire, 1);
 	if (x == 2) {
-		//pusher.start();
-		//pusher.count = 1;
-		//pusher.round = 0;
-		//if (myServo.read()) {
-		//	myServo.write(0);
-		//} else {
-		dbg << "start\n";
-		myServo.write(1100);
-		delay(200);
-		myServo.write(1500);
-		delay(200);
-		myServo.write(2000);
-		//delay(200);
-		pusher.start();
-		pusher.count = 1;
-		pusher.round = 0;
-		//delay(200);
-			//myServo.write(1832);
-			//myServo.write(2150);
-			//myServo.write(2150);
 
-		//}
+		dbg << F("M::Fire!!\n");
+		pusher.start();
+		launcher.start();
 
 	} else if (x == 3) {
 		pusher.stop();
-		myServo.write(0);
+		launcher.stop();
 	}
 	pusher.poll();
-
+	launcher.poll();
 
 
 

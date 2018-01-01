@@ -1,4 +1,3 @@
-// myfunc.h
 
 #ifndef _MYFUNC_h
 #define _MYFUNC_h
@@ -116,41 +115,6 @@ void register_PCINT(uint8_t pin_def);
 uint8_t check_PCINT(uint8_t pin_def, uint8_t debounce);
 void maintain_PCINT(uint8_t vec);
 //- -----------------------------------------------------------------------------------------------------------------------
-
-
-
-
-class pusherclass {
-public:
-	uint8_t ain2_pin; 
-	uint8_t ain1_pin; 
-	uint8_t stby_pin; 
-	uint8_t pwma_pin; 
-
-	uint8_t back_sens; 
-	uint8_t frnt_sens; 
-
-	uint8_t pwm_store;				// remember on the set speed
-
-	uint8_t operate = 3;			// 0 inactive, 1 start, 2 running, 3 returning, 4 break, 5 stopping
-	uint8_t position;				// 0 unknown, 1 front sensor, 11 still front sensor, 2 after frontsensor, 12 still after frontsensor, 
-									// 3 back sensor, 13 still back sensor, 4 after back sensor, 14 still after back sensor
-
-	uint8_t count = 0;				// how much darts should be pushed, 0 all, or 1 to 3
-	uint8_t round = 0;				// pushed darts counter
-
-	void init();					// init the hardware
-
-	void set_speed(uint8_t speed);	// set speed and remembers it
-	void start();					// start the pusher 
-	void stop();					// init the stop process
-
-	void poll();					// poll function to operate the pusher
-
-};
-
-
-
 
 
 #endif
