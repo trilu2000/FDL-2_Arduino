@@ -10,36 +10,9 @@
 
 
 #include <stdint.h>
-
-
-/*-- serial print functions -----------------------------------------------------------------------------------------------
-* template and some functions for debugging over serial interface
-* based on arduino serial class, so should work with all hardware served in arduino
-* http://aeroquad.googlecode.com/svn/branches/pyjamasam/WIFIReceiver/Streaming.h
-*/
-#define dbg Serial
-template<class T> inline Print &operator <<(Print &obj, T arg) { obj.print(arg); return obj; }
-
-const char num2char[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',  'A', 'B', 'C', 'D', 'E', 'F', };
-struct _HEX {
-	uint8_t *val;
-	uint8_t len;
-	_HEX(uint8_t v) : val(&v), len(1) {}
-	_HEX(uint8_t *v, uint8_t l = 1) : val(v), len(l) {}
-};
-inline Print &operator <<(Print &obj, const _HEX &arg) {
-	for (uint8_t i = 0; i<arg.len; i++) {
-		if (i) obj.print(' ');
-		obj.print(num2char[arg.val[i] >> 4]);
-		obj.print(num2char[arg.val[i] & 0xF]);
-	}
-	return obj;
-}
-
-enum _eTIME { _TIME };
-inline Print &operator <<(Print &obj, _eTIME arg) { obj.print('('); obj.print(millis()); obj.print(')'); return obj; }
-//- -----------------------------------------------------------------------------------------------------------------------
-
+#include <avr/eeprom.h>
+#include <avr/interrupt.h>
+#include <util/atomic.h>
 
 
 class waittimer {
@@ -117,5 +90,52 @@ void maintain_PCINT(uint8_t vec);
 //- -----------------------------------------------------------------------------------------------------------------------
 
 
-#endif
+/*-- timer functions ------------------------------------------------------------------------------------------------------
+* as i need timer0 interrupt for the encoder service i have to define an own millis() timer here.
+*/
+// https://github.com/zkemble/millis/blob/master/millis/
+extern volatile uint32_t milliseconds;
+void init_millis_timer0();																	// initialize timer0
+uint32_t get_millis(void);																	// get the current time in millis
 
+
+/*-- eeprom functions -----------------------------------------------------------------------------------------------------
+* eeprom is very hardware supplier related, therefor we define her some external functions which needs to be defined
+* in the hardware specific HAL file. for ATMEL it is defined in HAL_atmega.h.
+*/
+void init_eeprom(void);
+void get_eeprom(uint16_t addr, uint8_t len, void *ptr);
+void set_eeprom(uint16_t addr, uint8_t len, void *ptr);
+void clear_eeprom(uint16_t addr, uint16_t len);
+
+
+/*-- serial print functions -----------------------------------------------------------------------------------------------
+* template and some functions for debugging over serial interface
+* based on arduino serial class, so should work with all hardware served in arduino
+* http://aeroquad.googlecode.com/svn/branches/pyjamasam/WIFIReceiver/Streaming.h
+*/
+#define dbg Serial
+template<class T> inline Print &operator <<(Print &obj, T arg) { obj.print(arg); return obj; }
+
+const char num2char[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',  'A', 'B', 'C', 'D', 'E', 'F', };
+struct _HEX {
+	uint8_t *val;
+	uint8_t len;
+	_HEX(uint8_t v) : val(&v), len(1) {}
+	_HEX(uint8_t *v, uint8_t l = 1) : val(v), len(l) {}
+};
+inline Print &operator <<(Print &obj, const _HEX &arg) {
+	for (uint8_t i = 0; i<arg.len; i++) {
+		if (i) obj.print(' ');
+		obj.print(num2char[arg.val[i] >> 4]);
+		obj.print(num2char[arg.val[i] & 0xF]);
+	}
+	return obj;
+}
+
+enum _eTIME { _TIME };
+inline Print &operator <<(Print &obj, _eTIME arg) { obj.print('('); obj.print(get_millis()); obj.print(')'); return obj; }
+//- -----------------------------------------------------------------------------------------------------------------------
+
+
+#endif

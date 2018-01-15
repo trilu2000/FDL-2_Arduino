@@ -22,6 +22,8 @@ public:
 	void poll();					// poll function to operate the pusher
 	uint8_t mode = 1;				// how many darts to be launched by one start
 
+	void callback(uint8_t vec, uint8_t pin, uint8_t flag);
+
 private:
 	uint8_t *enable;				// pointer to an enable variable - 1 means enabled
 
@@ -33,12 +35,17 @@ private:
 	uint8_t pin_frnt;
 	uint8_t pin_back;
 
-	uint8_t operate = 3;			// 0 inactive, 1 start, 2 running, 3 returning, 4 break, 5 stopping
+	uint8_t operate = 3;			// 0 inactive, 1 start, 2 running, 3 returning, 4 start break, 5 breaking, 6 stopping
 	uint8_t position;				// 0 unknown, 1 front sensor, 11 still front sensor, 2 after frontsensor, 12 still after frontsensor, 
 									// 3 back sensor, 13 still back sensor, 4 after back sensor, 14 still after back sensor
 	uint8_t pwm_store;				// remember the set speed
 	uint8_t round = 0;				// pushed darts counter
+	
+	waittimer timer;
 };
+
+static PusherClass *pcint_callback;
+void pcint_hook(uint8_t vec, uint8_t pin, uint8_t flag);
 
 
 
@@ -63,7 +70,7 @@ public:
 	void poll();					// poll function to operate the pusher
 
 private:
-	uint8_t mode = 0;				// 0 = stopped, 10 = stopping, 1 = standby (reduced speed), 11 = going to standby speed, 2 = fire speed, 12 = accelerating to fire speed
+	uint8_t mode = 0;				// 0 = stopped, 10 = stopping, 1 = standby (reduced speed), 11 = going to standby speed, 2 = fire speed, 12 / 22 = accelerating to fire speed
 	uint8_t pin_esc;
 	Servo myServo;					// create a servo object
 
