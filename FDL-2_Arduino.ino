@@ -1,3 +1,14 @@
+/*- -----------------------------------------------------------------------------------------------------------------------
+*  FDL-2 arduino implementation
+*  2018-01-17 <trilu@gmx.de> Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+* - -----------------------------------------------------------------------------------------------------------------------
+* - main sketch -----------------------------------------------------------------------------------------------------------
+*   special thanks to Jesse Kovarovics http://www.projectfdl.com to make this happen
+* - -----------------------------------------------------------------------------------------------------------------------
+*/
+
+//#define DEBUG
+
 /* myfunc library holds the waittimer, some hardware setup functions and the pin change interrupt handling */
 #include "myfunc.h"
 // ------------------------------------------------------------------------------------------------
@@ -30,7 +41,7 @@ waittimer encoder_timeout;
 #include "motors.h"
 LauncherClass launcher(pinB2, 1000, 2000);
 uint8_t x = 1;
-PusherClass pusher(pinB5, pinB4, pinB3, pinB1, pinD7, pinD6,  x ); //launcher.ready);
+PusherClass pusher(pinB5, pinB4, pinB3, pinB1, pinD7, pinD6, launcher.ready);
 // ------------------------------------------------------------------------------------------------
 
 
@@ -45,9 +56,8 @@ uint8_t battery_level;
 #define fdl2_fire       pinD5
 
 
-
 void setup() {
-	Serial.begin(115200);
+	dbg.begin(115200);
 	dbg << F("\n\n\nFDL-2 Arduino v0.1\n\n");									// init serial interface and some debug
 
 	init_millis_timer0();														// init the timer0
@@ -66,12 +76,11 @@ void setup() {
 
 	// default settings
 	pusher.mode = 2;															// how many darts per fire push
-	launcher.fire_speed = 60;													// fire speed in % of max_speed
+	launcher.fire_speed = 80;													// fire speed in % of max_speed
 	launcher.speedup_time = 500;												// holds the time the motor needs to speedup
-	launcher.standby_speed = 60;												// standby speed in % of max_speed
-	launcher.standby_time = 2000;												// standby time in ms
+	launcher.standby_speed = 50;												// standby speed in % of max_speed
+	launcher.standby_time = 500;												// standby time in ms
 
-	//pci_ptr = &test_int;
 }
 
 
@@ -121,14 +130,14 @@ void loop() {
 	/* check fire button continously and drive pusher */
 	uint8_t x = check_PCINT(fdl2_fire, 1);
 	if (x == 2) {
-
-		dbg << F("M::Fire!!\n");
 		pusher.start();
-		//launcher.start();
+		launcher.start();
+		dbg << F("M::Fire button pushed\n");
 
 	} else if (x == 3) {
 		pusher.stop();
-		//launcher.stop();
+		launcher.stop();
+		dbg << F("M::Fire button released\n");
 	}
 
 }
@@ -287,24 +296,3 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 
-
-/*void serialEvent() {
-
-	while (Serial.available()) {
-		uint8_t inChar = (uint8_t)Serial.read();			// read a byte
-		if (inChar == 0x0A) return;
-
-		if (isDigit(inChar)) {
-			inString += (char)inChar;
-		}
-
-		if (inChar == 0x0D) {
-			servo_angle = inString.toInt();
-			//if (servo_angle > 179) servo_angle = 179;
-			Serial.print("Received a new value: ");
-			Serial.println(servo_angle);
-			inString = "";
-		}
-
-	}
-}*/

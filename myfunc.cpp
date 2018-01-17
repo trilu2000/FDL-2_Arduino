@@ -1,3 +1,12 @@
+/*- -----------------------------------------------------------------------------------------------------------------------
+*  FDL-2 arduino implementation
+*  2018-01-17 <trilu@gmx.de> Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+* - -----------------------------------------------------------------------------------------------------------------------
+* - all supporting functions, like pin setup, pin change interrupt handling, etc ------------------------------------------
+*   special thanks to Jesse Kovarovics http://www.projectfdl.com to make this happen
+* - -----------------------------------------------------------------------------------------------------------------------
+*/
+
 #include "myfunc.h"
 
 /**
@@ -119,6 +128,7 @@ uint8_t get_pin_status(uint8_t pin_def) {
 struct  s_pcint_vector {
 	volatile uint8_t *PINREG;
 	uint8_t curr;
+	uint8_t chng;
 	uint8_t prev;
 	uint8_t mask;
 	uint32_t time;
@@ -127,10 +137,10 @@ volatile s_pcint_vector pcint_vector[pc_interrupt_vectors];									// define a 
 
 /* function to register a pin interrupt */
 void register_PCINT(uint8_t def_pin) {
+
 	set_pin_input(def_pin);																	// set the pin as input
 	set_pin_high(def_pin);																	// key is connected against ground, set it high to detect changes
 
-																							// need to get vectore 0 - 2, depends on cpu
 	uint8_t vec = digitalPinToPCICRbit(def_pin);											// needed for interrupt handling and to sort out the port
 	uint8_t port = digitalPinToPort(def_pin);												// need the pin port to get further information as port register
 	if (port == NOT_A_PIN) return;															// return while port was not found
@@ -141,10 +151,8 @@ void register_PCINT(uint8_t def_pin) {
 	*digitalPinToPCICR(def_pin) |= _BV(digitalPinToPCICRbit(def_pin));						// pci functions
 	*digitalPinToPCMSK(def_pin) |= _BV(digitalPinToPCMSKbit(def_pin));						// make the pci active
 	
-	//pcint_vector[vec].curr |= get_pin_status(def_pin);									// remember current status of the port bit
-	//pcint_vector[vec].prev = pcint_vector[vec].curr;										// and set it as previous while we check for changes
 	maintain_PCINT(vec);
-	pcint_vector[vec].time = get_millis() - DEBOUNCE;
+	//dbg << "x-v:" << vec << ", m:" << pcint_vector[vec].mask << ", r:" << pcint_vector[vec].chng << ", pin:" << def_pin << '\n';
 }
 
 /* period check if a pin interrupt had happend */
@@ -167,16 +175,24 @@ uint8_t check_PCINT(uint8_t def_pin, uint8_t debounce) {
 
 void(*pci_ptr)(uint8_t vec, uint8_t pin, uint8_t flag);
 
+
 /* internal function to handle pin change interrupts */
 void maintain_PCINT(uint8_t vec) {
-	pcint_vector[vec].curr = *pcint_vector[vec].PINREG & pcint_vector[vec].mask;			// read the pin port and mask out only pins registered
-	pcint_vector[vec].time = get_millis();													// store the time, if debounce is asked for
+
+	pcint_vector[vec].curr = *pcint_vector[vec].PINREG  & pcint_vector[vec].mask;			// read the pin port and mask ot unneeded pins
+	pcint_vector[vec].time = get_millis();													// store the time, if we need to debounce it
+
+	if (pcint_vector[vec].chng == pcint_vector[vec].curr) return;							// nothing to do while the same status as last time
+	//dbg << "i-v:" << vec << ", m:" << pcint_vector[vec].mask << ", c:" << pcint_vector[vec].curr << ", n:" << pcint_vector[vec].chng << ", x:" << (pcint_vector[vec].curr ^ pcint_vector[vec].chng) << '\n';
 
 	if (pci_ptr) {
-		uint8_t pin_int = pcint_vector[vec].curr ^ pcint_vector[vec].prev;					// evaluate the pin which raised the interrupt
-		pci_ptr(vec, pin_int, pcint_vector[vec].curr & pin_int);							// callback the interrupt function in user sketch
+		uint8_t pin_int = pcint_vector[vec].curr ^ pcint_vector[vec].chng;					// evaluate the pin which raised the interrupt
+		pci_ptr(vec, pin_int, pcint_vector[vec].curr);										// callback the interrupt function in user sketch
 	}
+
+	pcint_vector[vec].chng = pcint_vector[vec].curr;										// remember the current status to see the change next time
 }
+
 
 /* interrupt vectors to catch pin change interrupts */
 #ifdef PCIE0

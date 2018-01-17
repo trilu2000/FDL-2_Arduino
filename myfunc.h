@@ -1,3 +1,11 @@
+/*- -----------------------------------------------------------------------------------------------------------------------
+*  FDL-2 arduino implementation
+*  2018-01-17 <trilu@gmx.de> Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+* - -----------------------------------------------------------------------------------------------------------------------
+* - all supporting functions, like pin setup, pin change interrupt handling, etc ------------------------------------------
+*   special thanks to Jesse Kovarovics http://www.projectfdl.com to make this happen
+* - -----------------------------------------------------------------------------------------------------------------------
+*/
 
 #ifndef _MYFUNC_h
 #define _MYFUNC_h
@@ -114,8 +122,22 @@ void clear_eeprom(uint16_t addr, uint16_t len);
 * based on arduino serial class, so should work with all hardware served in arduino
 * http://aeroquad.googlecode.com/svn/branches/pyjamasam/WIFIReceiver/Streaming.h
 */
-#define dbg Serial
-template<class T> inline Print &operator <<(Print &obj, T arg) { obj.print(arg); return obj; }
+
+class NullSerial : public Print {
+public:
+	virtual size_t write(uint8_t) { return (1); }
+	void begin(int16_t) {}
+};
+
+NullSerial static Noserial;
+
+#ifdef DEBUG
+	#define dbg Serial
+#else
+	#define dbg Noserial
+#endif
+
+template<class T> Print &operator <<(Print &obj, T arg) { obj.print(arg); return obj; }
 
 const char num2char[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',  'A', 'B', 'C', 'D', 'E', 'F', };
 struct _HEX {
