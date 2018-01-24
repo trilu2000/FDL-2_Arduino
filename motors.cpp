@@ -58,7 +58,7 @@ void PusherClass::start() {
 }
 void PusherClass::stop() {
 	if (operate >= 3) return;													// we are already in stopping mode
-	if ((mode) && (round < mode)) return;										// don't now, while count is in use and not complete
+	if ((*mode) && (round < *mode)) return;										// don't now, while count is in use and not complete
 	operate = 3;																// enter go back mode
 	dbg_p << F("P::stop needed ") << _TIME << '\n';								// some debug
 }
@@ -79,7 +79,7 @@ void PusherClass::poll() {
 
 	} else if (operate == 2) {					// pusher runs, check count mode
 
-		if ((mode) && (round >= mode)) {										// check if we are in count mode and reached the target
+		if ((*mode) && (round >= *mode)) {										// check if we are in count mode and reached the target
 			stop();																// slow down and start stop operation
 			dbg_p << F("P::reached count: ") << round << ' ' << _TIME << '\n';	// some debug
 		}
@@ -222,37 +222,37 @@ void LauncherClass::init() {
 }
 void LauncherClass::start() {
 
-	set_speed = max_speed / 100 * fire_speed;									// calculate the needed speed - max_speed is an absolute value and fire_speed a percentage value
+	set_speed = max_speed / 100 * *fire_speed;									// calculate the needed speed - max_speed is an absolute value and fire_speed a percentage value
 
 	/* state machine modes: 0 = stopped, 10 = stopping, 1 = standby (reduced speed), 
 	** 11 = going to standby speed, 2 = fire speed, 12 = accelerating to fire speed */
 	uint16_t set_timer;															// generate a variable to store the speedup time against different circumsdances
-	if (mode == 0) set_timer = speedup_time;									// coming from stopped, full time needed
+	if (mode == 0) set_timer = *speedup_time;									// coming from stopped, full time needed
 	else if (mode == 2) set_timer = 0;											// we are already in fire mode, no additional time needed
-	else set_timer = speedup_time / 2;											// standby, decrease to standby or accelerating to fire, not the fulltime needed
+	else set_timer = *speedup_time / 2;											// standby, decrease to standby or accelerating to fire, not the fulltime needed
 
 	mode = 12;																	// set state machine to 'accelerating to fire speed'
 	timer.set(set_timer);														// set the timer accordingly
 	myServo.writeMicroseconds(set_speed);										// and write the new speed into the esc
 
-	dbg_l << F("L::set start, speed: ") << fire_speed << F(", set_speed: ") << set_speed << F(", speedup_time: ") << speedup_time << F(", set_timer: ") << set_timer << ' ' << _TIME << '\n';
+	dbg_l << F("L::set start, speed: ") << *fire_speed << F(", set_speed: ") << set_speed << F(", speedup_time: ") << *speedup_time << F(", set_timer: ") << set_timer << ' ' << _TIME << '\n';
 }
 void LauncherClass::stop() {
 	/* stop means, we are reducing the speed of the launcher to a standby level for a certain time
 	** here we are setting a new status of the state machine */
 
-	if (set_speed) set_speed = max_speed / 100 * standby_speed;					// calculate the standby speed 				
+	if (set_speed) set_speed = max_speed / 100 * *standby_speed;				// calculate the standby speed 				
 
 	/* state machine modes: 0 = stopped, 10 = stopping, 1 = standby (reduced speed),
 	** 11 = going to standby speed, 2 = fire speed, 12 = accelerating to fire speed */
-	uint16_t set_timer = speedup_time / 2;										// we need some time to slow down
+	uint16_t set_timer = *speedup_time / 2;										// we need some time to slow down
 
 	ready = 0;																	// indicate the pusher that he cannot fire
 	mode = 11;																	// we are going to standby speed
 	timer.set(set_timer);														// set the timer accordingly
 	myServo.writeMicroseconds(set_speed);										// write the new speed into the esc
 
-	dbg_l << F("L::set stop, speed: ") << standby_speed << F(", set_speed: ") << set_speed << F(", set_timer: ") << set_timer << ' ' << _TIME << '\n';
+	dbg_l << F("L::set stop, speed: ") << *standby_speed << F(", set_speed: ") << set_speed << F(", set_timer: ") << set_timer << ' ' << _TIME << '\n';
 }
 
 void LauncherClass::poll() {
@@ -271,14 +271,14 @@ void LauncherClass::poll() {
 
 	} else if (mode == 11) {		// reducing speed to standby mode
 		/* triggered in the stop function, if we are here the stop time has finsished */
-		timer.set(standby_time);												// set the standby timer
+		timer.set(*standby_time);												// set the standby timer
 		mode = 1;																// set status 'standby' - we are on reduced speed
-		dbg_l << F("L::standby for ") << standby_time  << F("ms ") << _TIME << '\n';
+		dbg_l << F("L::standby for ") << *standby_time  << F("ms ") << _TIME << '\n';
 
 
 	} else if (mode == 1) {			// standby time is over
 		/* triggered by the state machine itself, standby is over, we need to stop the motor */
-		uint16_t set_timer = speedup_time / 2;									// calculate the time for the stop process
+		uint16_t set_timer = *speedup_time / 2;									// calculate the time for the stop process
 		timer.set(set_timer);													// set the timer accordingly
 		myServo.writeMicroseconds(0);											// set the esc to stop
 		mode = 10;																// set the status to stopping mode

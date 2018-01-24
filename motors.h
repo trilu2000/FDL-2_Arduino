@@ -25,7 +25,7 @@
 */
 class PusherClass {
 public:
-	uint8_t mode;					// how many darts to be launched by one start
+	uint8_t *mode;					// how many darts to be launched by one start
 	PusherClass(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY, uint8_t FRNT_SENS, uint8_t BACK_SENS, uint8_t &launcher_enable);
 
 	void set_speed(uint8_t speed);	// set speed and remembers it
@@ -69,10 +69,10 @@ void pcint_hook(uint8_t vec, uint8_t pin, uint8_t flag);
 class LauncherClass {
 public:
 	uint8_t ready;					// signals readiness of launcher 
-	uint8_t fire_speed;				// fire speed in % of max_speed
-	uint16_t speedup_time;			// holds the time the motor needs to speedup
-	uint8_t standby_speed;			// standby speed in % of max_speed
-	uint16_t standby_time;			// standby time in ms
+	uint8_t *fire_speed;			// fire speed in % of max_speed
+	uint16_t *speedup_time;			// holds the time the motor needs to speedup
+	uint8_t *standby_speed;			// standby speed in % of max_speed
+	uint16_t *standby_time;			// standby time in ms
 
 	LauncherClass(uint8_t ESC, uint16_t min_speed, uint16_t max_speed);
 

@@ -7,7 +7,7 @@
 * - -----------------------------------------------------------------------------------------------------------------------
 */
 
-//#define DEBUG
+#define DEBUG
 
 /* myfunc library holds the waittimer, some hardware setup functions and the pin change interrupt handling */
 #include "myfunc.h"
@@ -52,6 +52,13 @@ waittimer battery_timer;
 uint8_t battery_level;
 // ------------------------------------------------------------------------------------------------
 
+struct s_settings {
+	uint8_t  mode = 2;															// how many darts per fire push
+	uint8_t  fire_speed = 80;													// fire speed in % of max_speed
+	uint16_t speedup_time = 500;												// holds the time the motor needs to speedup
+	uint8_t  standby_speed = 50;												// standby speed in % of max_speed
+	uint16_t standby_time = 500;												// standby time in ms
+}settings;
 
 #define fdl2_fire       pinD5
 
@@ -61,6 +68,7 @@ void setup() {
 	dbg << F("\n\n\nFDL-2 Arduino v0.1\n\n");									// init serial interface and some debug
 
 	init_millis_timer0();														// init the timer0
+	init_eeprom();																// init the eeprom
 
 	u8g2.begin();																// init the display and show some start message
 	display_welcome();															// show the welcome screen
@@ -74,13 +82,27 @@ void setup() {
 	register_PCINT(encoder_click);												// init and register the click encoder button
 	register_PCINT(fdl2_fire);													// init and register the fire button as interrupt
 
-	// default settings
-	pusher.mode = 2;															// how many darts per fire push
-	launcher.fire_speed = 80;													// fire speed in % of max_speed
-	launcher.speedup_time = 500;												// holds the time the motor needs to speedup
-	launcher.standby_speed = 50;												// standby speed in % of max_speed
-	launcher.standby_time = 500;												// standby time in ms
+	/* read defaults from eeprom in case that the magic number is ok */
+	dbg << F("read settings from eeprom\n");
 
+	uint16_t magic;
+	get_eeprom(0, 2, &magic);
+	if (magic != 0x1236) {														// magic number doesn't fit, so a new config needs written
+		magic = 0x1236;															// set a magic number
+		set_eeprom(0, 2, &magic);												// write the magic to the eeprom
+		set_eeprom(2, 7, &settings);											// write the settings
+		dbg << F("magic doesn't fit, write defaults\n");
+	}
+
+	get_eeprom(2, 7, &settings);												// read the settings
+
+	pusher.mode = &settings.mode;												// how many darts per fire push
+	launcher.fire_speed = &settings.fire_speed;									// fire speed in % of max_speed
+	launcher.speedup_time = &settings.speedup_time;								// holds the time the motor needs to speedup
+	launcher.standby_speed = &settings.standby_speed;							// standby speed in % of max_speed
+	launcher.standby_time = &settings.standby_time;								// standby time in ms
+	
+	dbg << F("init complete, mode: ") << *pusher.mode << F(", speed: ") << *launcher.fire_speed << F(", speedup_time: ") << *launcher.speedup_time << F(", standby_speed: ") << *launcher.standby_speed << F(", standby_time: ") << *launcher.standby_time << F("\n\n");
 }
 
 
@@ -153,12 +175,12 @@ void encoder_up(int8_t x) {
 
 	if (menu_select == 1) {
 		if (menu_item == 1) {
-			pusher.mode += 1;
-			if (pusher.mode > 3) pusher.mode = 0;
+			settings.mode += 1;
+			if (settings.mode > 3) settings.mode = 0;
 		}
 		if (menu_item == 2) {
-			launcher.fire_speed += 5;
-			if (launcher.fire_speed  > 100) launcher.fire_speed = 100;
+			settings.fire_speed += 5;
+			if (settings.fire_speed  > 100) settings.fire_speed = 100;
 		}
 	}
 
@@ -176,12 +198,12 @@ void encoder_down(int8_t x) {
 
 	if (menu_select == 1) {
 		if (menu_item == 1) {
-			if (pusher.mode == 0) pusher.mode = 3;
-			else pusher.mode -= 1;
+			if (settings.mode == 0) settings.mode = 3;
+			else settings.mode -= 1;
 		}
 		if (menu_item == 2) {
-			launcher.fire_speed -= 5;
-			if (launcher.fire_speed  < 50) launcher.fire_speed = 50;
+			settings.fire_speed -= 5;
+			if (settings.fire_speed  < 50) settings.fire_speed = 50;
 		}
 	}
 
@@ -193,7 +215,11 @@ void encoder_button(int8_t x) {
 	if (x != 2) return;														// we use only a button press event
 	if (!menu_item) return;													// no item is selected
 	menu_select++;															// increase the select
-	if (menu_select >= 2) menu_select = 0;									// if its 2 or above we start from begin
+
+	if (menu_select >= 2) {													// menu select 2 means, we are in edit mode
+		set_eeprom(2, 7, &settings);										// write the settings
+		menu_select = 0;													// back for a new select
+	}
 	//dbg << F("p: ") << x << F(", ") << menu_select << '\n';
 
 	display_status();
@@ -214,16 +240,16 @@ void display_status() {
 
 		u8g2.print(status_line_item(1));									// get the status of the line item
 		u8g2.print(F("Mode: "));
-		if (pusher.mode == 0) u8g2.print(F("unlimited"));
-		if (pusher.mode == 1) u8g2.print(F("single"));
-		if (pusher.mode == 2) u8g2.print(F("double"));
-		if (pusher.mode == 3) u8g2.print(F("tripple"));
+		if (settings.mode == 0) u8g2.print(F("unlimited"));
+		if (settings.mode == 1) u8g2.print(F("single"));
+		if (settings.mode == 2) u8g2.print(F("double"));
+		if (settings.mode == 3) u8g2.print(F("tripple"));
 
 		u8g2.setCursor(0, 55);
 
 		u8g2.print(status_line_item(2));									// get the status of the line item
 		u8g2.print(F("Speed: "));											
-		u8g2.print(launcher.fire_speed);
+		u8g2.print(settings.fire_speed);
 		u8g2.print("%");
 
 	} while (u8g2.nextPage());												// step throug the buffer pages till the end
