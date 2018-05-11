@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="8.5.0">
+<eagle version="9.0.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -4809,8 +4809,8 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <part name="P-BACK" library="con-lstb" deviceset="MA02-1" device=""/>
 <part name="P-FRONT" library="con-lstb" deviceset="MA02-1" device=""/>
 <part name="S1" library="SparkFun-Switches" deviceset="ENCODER-SWITCH" device=""/>
-<part name="R1" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0204/5" package3d_urn="urn:adsk.eagle:package:23488/1"/>
-<part name="R2" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0204/2V" package3d_urn="urn:adsk.eagle:package:23495/1"/>
+<part name="R1" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0204/5" package3d_urn="urn:adsk.eagle:package:23488/1" value="120k"/>
+<part name="R2" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0204/2V" package3d_urn="urn:adsk.eagle:package:23495/1" value="10k"/>
 <part name="SV2" library="con-lstb" deviceset="MA04-1" device="" package3d_urn="urn:adsk.eagle:package:8337/1"/>
 <part name="FIRE" library="con-lstb" deviceset="MA03-1" device="" value=""/>
 <part name="U$1" library="con-lstb" deviceset="MA03-1" device=""/>
@@ -4831,7 +4831,7 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <instance part="P-FRONT" gate="G$1" x="-10.16" y="12.7" rot="MR0"/>
 <instance part="S1" gate="G$1" x="78.74" y="50.8" rot="R180"/>
 <instance part="R1" gate="G$1" x="48.26" y="88.9" rot="R180"/>
-<instance part="R2" gate="G$1" x="48.26" y="83.82" rot="R180"/>
+<instance part="R2" gate="G$1" x="48.26" y="81.28" rot="R180"/>
 <instance part="SV2" gate="1" x="-10.16" y="-5.08" rot="MR0"/>
 <instance part="FIRE" gate="G$1" x="-10.16" y="45.72" rot="MR0"/>
 <instance part="U$1" gate="G$1" x="73.66" y="86.36" rot="R180"/>
@@ -4921,7 +4921,7 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 </net>
 <net name="N$12" class="0">
 <segment>
-<wire x1="60.96" y1="83.82" x2="60.96" y2="71.12" width="0.1524" layer="91"/>
+<wire x1="60.96" y1="81.28" x2="60.96" y2="71.12" width="0.1524" layer="91"/>
 <pinref part="B1" gate="G$1" pin="GND@2"/>
 <wire x1="60.96" y1="40.64" x2="60.96" y2="50.8" width="0.1524" layer="91"/>
 <wire x1="60.96" y1="50.8" x2="60.96" y2="71.12" width="0.1524" layer="91"/>
@@ -4932,12 +4932,13 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <wire x1="60.96" y1="40.64" x2="91.44" y2="40.64" width="0.1524" layer="91"/>
 <junction x="60.96" y="50.8"/>
 <pinref part="R2" gate="G$1" pin="1"/>
-<wire x1="53.34" y1="83.82" x2="60.96" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="81.28" x2="60.96" y2="81.28" width="0.1524" layer="91"/>
 <pinref part="U$1" gate="G$1" pin="3"/>
-<wire x1="60.96" y1="83.82" x2="66.04" y2="83.82" width="0.1524" layer="91"/>
-<junction x="60.96" y="83.82"/>
+<junction x="60.96" y="81.28"/>
 <wire x1="91.44" y1="40.64" x2="91.44" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="91.44" y1="45.72" x2="86.36" y2="45.72" width="0.1524" layer="91"/>
+<wire x1="66.04" y1="83.82" x2="60.96" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="60.96" y1="83.82" x2="60.96" y2="81.28" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -4970,14 +4971,14 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <net name="N$13" class="0">
 <segment>
 <pinref part="B1" gate="G$1" pin="A3"/>
-<wire x1="40.64" y1="88.9" x2="40.64" y2="83.82" width="0.1524" layer="91"/>
-<wire x1="40.64" y1="83.82" x2="40.64" y2="63.5" width="0.1524" layer="91"/>
+<wire x1="40.64" y1="88.9" x2="40.64" y2="81.28" width="0.1524" layer="91"/>
+<wire x1="40.64" y1="81.28" x2="40.64" y2="63.5" width="0.1524" layer="91"/>
 <wire x1="40.64" y1="63.5" x2="30.48" y2="63.5" width="0.1524" layer="91"/>
 <pinref part="R1" gate="G$1" pin="2"/>
 <wire x1="40.64" y1="88.9" x2="43.18" y2="88.9" width="0.1524" layer="91"/>
 <pinref part="R2" gate="G$1" pin="2"/>
-<wire x1="43.18" y1="83.82" x2="40.64" y2="83.82" width="0.1524" layer="91"/>
-<junction x="40.64" y="83.82"/>
+<wire x1="43.18" y1="81.28" x2="40.64" y2="81.28" width="0.1524" layer="91"/>
+<junction x="40.64" y="81.28"/>
 </segment>
 </net>
 <net name="N$7" class="0">
