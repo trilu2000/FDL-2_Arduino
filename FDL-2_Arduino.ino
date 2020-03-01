@@ -130,7 +130,7 @@ void loop() {
 	/* poll the status display function */
 	if (display_timer.done()) {
 		display_status();
-		display_timer.set(10000);
+		display_timer.set(5000);
 	}
 
 
@@ -144,7 +144,7 @@ void loop() {
 		if (bat_value > 990) battery_level = (bat_value - 990) * 10 / 27;		// calculate the percentage level of the battery
 		else battery_level = 0;													// this value is available outside of this if clause
 
-		display_battery_update(battery_level);									// write it into the display
+		//display_battery_update(battery_level);									// write it into the display
 		battery_timer.set(5000);												// set next time to measure
 	}
 
@@ -253,7 +253,6 @@ void display_status() {
 		u8g2.print("%");
 
 	} while (u8g2.nextPage());												// step throug the buffer pages till the end
-
 	//dbg << F("status display update ") << _TIME << '\n';
 }
 
@@ -273,8 +272,9 @@ char status_line_item(uint8_t item_nr) {
 
 /* draws the welcome screen on the display, battery level follows later */
 void display_welcome() {
-	u8g2.clear();
 	//u8g2.clearDisplay();													// clear the display
+	u8g2.clear();
+
 	u8g2.firstPage();														// start with the first buffer
 
 	do {																	// loop throug all buffers
@@ -283,20 +283,6 @@ void display_welcome() {
 	dbg << F("show welcome screen ") << _TIME << '\n';						// some debug
 }
 
-
-/* display battery update writes only into the first 8 lines into the display, evverything
-** else in the display is untouched. function is called by the battery measurement function in the main loop */
-void display_battery_update(uint8_t level) {
-	static uint8_t battery_level_display;
-	if (battery_level_display == level) return;								// nothing to do
-
-	u8g2.firstPage();														// start with the first page
-	draw_battery(level);													// draw the status in the buffer
-	u8g2.nextPage();														// write it to the display
-
-	battery_level_display = level;											// remember on the new value
-	dbg << F("update battery level to ") << level << F("% ") << _TIME << '\n';// some debug
-}
 
 
 void draw_battery(uint8_t battery) {
